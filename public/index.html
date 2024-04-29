@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html>
+     <head>
+          <meta charset="UTF-8" />
+          <title>Babylon Express Server</title>
+          <script src="https://code.jquery.com/jquery-3.7.0.min.js" integrity="sha256-2Pmvv0kuTBOenSvLm6bvfBSSHrUJ+3A7x6P5Ebd07/g=" crossorigin="anonymous"></script>
+          <script src="https://cdn.babylonjs.com/babylon.js"></script>
+          <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
+          <script src="https://preview.babylonjs.com/earcut.min.js"></script>
+
+          <link rel="stylesheet" href="/css/bootstrap.css" />
+          <link rel="stylesheet" href="/css/all.min.css">
+          <link href="https://code.jquery.com/ui/1.10.4/themes/ui-lightness/jquery-ui.css" rel="stylesheet">
+          <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.1.3/cropper.css" rel="stylesheet">
+          <script src="/js/bootstrap.min.js"></script>
+          <script src="/js/bootstrap.bundle.min.js"></script>
+          <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.1.3/cropper.js"></script>
+          <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+          
+          <style>
+
+               html body {
+                    overflow: hidden;
+                    width: 100%;
+                    height: 100%;
+                    margin: 0; 
+                    padding: 0;
+               }
+               #canvas {
+                    width: 100%;
+                    height: 100%;
+                    outline: none;
+               }
+               #buttonArea {
+                    position: fixed;
+                    left: 0px;
+                    top: 0px;
+                    z-index: 2;
+                    background-color: #EBEBEB;
+                    text-align: center; /* Centers horizontally */
+                    width: 100%; 
+                    height: 60px; 
+               }
+               .leftImg{
+                    float: left;
+                    max-width: 2.3%;
+                    min-width: 2.3%;
+               }
+               .btn.disabled{
+                    bs-btn-disabled-border-color: none;
+               }
+
+               .element-sidebar{
+                    position: absolute;
+                    right: 0;
+                    top: 0;
+                    overflow-y: scroll;
+                    overflow-x: hidden;
+                    margin-top: 3.8rem;
+                    width: 400px;
+                    height: 680px;
+                    background-color: #ffffff;
+                    opacity: 0.9;
+               }
+               .element-sidebar i{font-size: 1.5rem;}
+               #uploadBtn label{cursor: pointer;}
+               .file-upload-input{display: none;}
+               ul.list-action-icon{padding: 0px; margin-top: 5px;}
+               ul.list-action-icon li{display: inline; margin: 5px; cursor: pointer;}
+               .custom-tooltip {
+               --bs-tooltip-bg: var(--bs-primary) !important;
+               }
+               .originalFrame, .originalCropperFrame{text-align: center;}
+               .numberContours{display: none;}
+               .canvasContourFrame{margin: 10px; border: 1px solid #967E76; cursor: pointer;}
+               .contourPreviewImageFrame canvas{border: 1px solid #967E76;}
+               .list-group-item{background-color: #C9EEFF;}
+
+               #spinner {
+                    text-align: center;
+                    background:#141E27;
+                    opacity: 0.9;
+                    margin-bottom:10px;
+                    height: 100%;
+                    width: 100%;
+                    top: 0;
+                    left: 0;
+                    position:absolute;
+                    display: none;
+                    z-index: 999999;
+               }
+               #spinner i{
+                    font-size: 5rem;
+               }
+               /* The ghost, nudged to maintain perfect centering */
+               #spinner:before {
+                    content: '';
+                    display: inline-block;
+                    height: 100%;
+                    vertical-align: middle;
+                    margin-right: -0.25em; /* Adjusts for spacing */
+               }
+
+               /* The element to be centered, can
+               also be of any width and height */ 
+               #spinner > div {
+                    display: inline-block;
+                    vertical-align: middle;
+                    color: white;
+               }
+               #uploadBtn{
+                    padding: 0;
+                    margin-left: 10px;
+               }
+               .contourImageFrame{border: 1px solid #164B60;}
+               .groundContours{
+                    text-align: center;
+               }
+               .groundContours input{
+                    margin: 0 auto;
+                    text-align: center;
+               }
+          </style>
+          <div id="topArea">
+               <div id="buttonArea">
+                    <img class="leftImg" src="assets/logo.png" alt="">
+                 
+                    <button id="zoomIn" class="btn bg-transparent rounded-0 btn-space" title="Zoom In">
+                         <i class="fa-solid fa-magnifying-glass-plus"></i>
+                    </button>
+                    <button id="zoomOut" class="btn bg-transparent rounded-0 btn-space" title="Zoom Out">
+                         <i class="fa-solid fa-magnifying-glass-minus"></i>
+                    </button>
+                    <button id="OrthoCam" class="btn bg-transparent rounded-0 btn-space" title="Ortho Camera">
+                         <i class="fa-solid fa-camera"></i>
+                    </button>
+                    <button id="PerspectiveCam" class="btn bg-transparent rounded-0 btn-space" title="Perspective Camera">
+                         <i class="fa-solid fa-camera-rotate"></i>
+                    </button>
+                    <button id="UnLock" class="btn bg-transparent rounded-0 btn-space" title="Unlock">
+                         <i class="fa-solid fa-unlock-keyhole"></i>
+                    </button>
+                    <button id="Undo" class="btn bg-transparent rounded-0 btn-space" title="Undo Action">
+                         <i class="fa fa-undo"></i>
+                    </button>
+                    <button id="Redo" class="btn bg-transparent rounded-0 btn-space" title="Redo Action">
+                         <i class="fa fa-redo"></i>
+                    </button>
+                    <button id="Subtract" class="btn bg-transparent rounded-0 btn-space" title="Substract">
+                         <i class="fa-regular fa-square-minus"></i>
+                    </button>
+                    <button id="Copy" class="btn bg-transparent rounded-0 btn-space" title="Copy">
+                         <i class="fa-regular fa-copy"></i>
+                    </button>
+                    <button id="Paste" class="btn bg-transparent rounded-0 btn-space" title="Paste">
+                         <i class="fa-regular fa-paste"></i>
+                    </button>
+                    <button id="Trash" class="btn bg-transparent rounded-0 btn-space" title="Trash">
+                         <i class="fa-solid fa-trash"></i>
+                    </button>
+                    <button id="drawSquare" class="btn bg-transparent rounded-0 btn-space" title="Draw Square">
+                         <i class="fa-regular fa-square"></i>
+                    </button>
+                    <button id="drawCircle" class="btn bg-transparent rounded-0 btn-space" title="Draw Circle">
+                         <i class="fa-regular fa-circle"></i>
+                    </button>
+                    <button id="drawPoly" class="btn bg-transparent rounded-0 btn-space" title="Draw Polygon">
+                         <i class="fa-solid fa-draw-polygon"></i>
+                    </button>
+                    <button id="uploadBtn" class="btn bg-transparent rounded-0 btn-space" title="Upload Image">
+                         <label for="file-upload">
+                              <i class="fa-solid fa-upload"></i>
+                              <input type="file" id="file-upload" style="display: none" name="file-upload" accept="image/gif,image/jpeg,image/jpg,image/png" multiple="" data-original-title="upload photos">
+                         </label>
+                    </button>
+                    
+                    <button id="saveSceneBtn" class="btn btn-success rounded-0 btn-space m-2" style="float: right;" title="Save & Confirm">
+                         <i class="fa-solid fa-floppy-disk"></i> Save & Confirm
+                    </button>
+                    <button id="downloadBtn" class="btn btn-primary rounded-0 btn-space m-2" style="float: right;" title="Download">
+                         <i class="fa-solid fa-download"></i> Export
+                    </button>
+                    <button id="createNewBtn" class="btn btn-warning rounded-0 btn-space m-2" style="float: right;" title="New Scene">
+                         <i class="fa-solid fa-add"></i> Create New Scene
+                    </button>
+                    <!-- <button id="loadSceneBtn" class="btn btn-info rounded-0 btn-space m-2" style="float: right;" title="Load a Babylon Scene">
+                         <i class="fa-solid fa-floppy-disk"></i> Load Scene
+                    </button> -->
+               </div>
+          </div>
+          
+     </head>
+
+     <body id="body">
+          <div class="text-center">
+               <div id="spinner">
+                    <div>
+                         <i class='fa fa-refresh fa-spin'></i>
+                         <span style="font-size: 24px;display: block; margin-top: 10px;"></span>
+                    </div>
+                </div>
+          </div>
+          <div class="container-fluid">
+               <div class="row">
+                    <canvas id="canvas">
+                         <script src="js/index.js"></script>
+                    </canvas>
+               </div>
+               
+               <div class="element-sidebar">
+                    <div class="d-flex flex-column align-items-stretch flex-shrink-0" style="width: 380px;">
+                         <div class="row">
+                              <div class="col-md-6">
+                                   <a class="d-flex align-items-center flex-shrink-0 p-3 link-dark text-decoration-none border-bottom">
+                                        <span class="fs-5 fw-semibold">Uploads</span>
+                                   </a>
+                              </div>
+                              <div class="col-md-6">
+                                   <button id="resetBtn" class="btn btn-outline-primary rounded-0 btn-space m-3 btn-sm" style="float: right;" title="Reset">
+                                        <i class="fa-solid fa-rotate-right" style="font-size: 1rem;"></i> Reset
+                                   </button>
+                              </div>
+                         </div>
+                         
+                         
+                         
+                         <div class="col-sm-12">
+                              <div class="list-group list-group-flush border-bottom scrollarea">
+                                   
+                              </div>
+                         </div>
+                         
+                    </div>
+               </div>
+
+               <!-- Modal -->
+            
+               <div class="modal fade modal-lg" id="contourModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                    <div class="modal-content">
+                    <div class="modal-header">
+                         <h5 class="modal-title" id="exampleModalLabel">Contour</h5>
+                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                         <div class="row">
+                              <div class="col-sm-12">
+                                   <div class="originalFrame">
+                                        <p>Original</p>
+                                        <img class="originalImage frameImage" src="https://via.placeholder.com/100x100" width="180" />
+                                   </div>
+                              </div>
+                         </div>
+                         <br/>
+                         <div class="row">
+                              <p class="numberContours"></p>
+                              <div class="col-sm-12">
+                                   <div id="work_area" class="groundContours">
+                                        <canvas id="drawCanvas"></canvas>
+                                   </div>
+                              </div>
+                             
+                         </div>
+                    </div>
+                    <div class="modal-footer">
+                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                         <button id="drawAction" type="button" class="btn btn-primary getContourAction">Draw</button>
+                         <button id="editContourAction" type="button" class="btn btn-primary editContour">Edit Contour</button>
+                         <button id="getContourAction" type="button" class="btn btn-primary getContourAction">Get Contours</button>
+                         <button id="confirmContour" type="button" class="btn btn-success confirmContourAction" disabled>Confirm</button>
+                    </div>
+                    </div>
+                    </div>
+               </div>
+               <!-- Modal -->
+               <div class="modal fade modal-lg" id="drawModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                    <div class="modal-content">
+                    <div class="modal-header">
+                         <h5 class="modal-title" id="exampleModalLabel">Some heading</h5>
+                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                         <div class="row">
+                              <div class="col-sm-12">
+                                   <canvas id="drawCanvasBase"></canvas>
+                              </div>
+                         </div>
+                         <br/>
+                    </div>
+                    <div class="modal-footer">
+                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                         <button id="confirmContour" type="button" class="btn btn-success confirmContourAction">Confirm</button>
+                    </div>
+                    </div>
+                    </div>
+               </div>
+               <!-- Cropper Modal -->
+               <div class="modal fade modal-lg" id="cropperModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                    <div class="modal-dialog">
+                    <div class="modal-content">
+                    <div class="modal-header">
+                         <h5 class="modal-title" id="exampleModalLabel">Crop your image</h5>
+                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                         <div class="row">
+                              <div class="col-sm-12">
+                                   <div class="originalCropperFrame">
+                                        <img id="cropperBaseImage" class="cropperBaseImage frameImage" src="https://via.placeholder.com/100x100" width="500" />
+                                   </div>
+                              </div>
+                         </div>
+                         <br/>
+                    </div>
+                    <div class="modal-footer">
+                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Keep Original</button>
+                         <button id="confirmCrpper" type="button" class="btn btn-success confirmCropperAction">Crop & Confirm</button>
+                    </div>
+                    </div>
+                    </div>
+               </div>
+
+               <div class="position-fixed bottom-0 start-50 translate-middle-x" style="z-index: 11">
+                    <div id="messageToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                         <div class="d-flex">
+                              <div class="toast-body">
+                                   You data has been saved successfully!!
+                              </div>
+                              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                         </div>
+                    </div>
+               </div>
+               
+          </div>
+          
+          
+          <script>
+               // A $( document ).ready() block.
+               $( document ).ready(function() {
+                    console.log( "Javascript ready!" );
+                    $("#buttonArea button").tooltip();
+                    //Function to append element in the sidebar
+                    function appendElement(input) {
+                         var generatedID = new Date().getUTCMilliseconds();
+                         var previewImageID = "previewImage_"+generatedID;
+                         
+                         var stringElement = '<a href="#" class="list-group-item list-group-item-action py-3 lh-tight"> \
+                                                  <div class="w-100 align-items-center justify-content-between"> \
+                                                       <small class="text-muted"> \
+                                                            <img class="previewImage" id="previewImage_'+generatedID+'" src="#" alt="preview" width="180" style="display:none;"/> \
+                                                       </small> \
+                                                       <div id="contourPreviewImage_'+generatedID+'" class="contourPreviewImageFrame"></div>\
+                                                  </div> \
+                                                  <div class="col-10mb-1small"> \
+                                                       <ul class="list-action-icon"> \
+                                                            <li class="list-action-icon-item add-item" value="'+generatedID+'"> \
+                                                                 <i class="fa-solid fa-circle-plus"></i> \
+                                                            </li> \
+                                                            <li class="list-action-icon-item more-info-item" value="'+generatedID+'"> \
+                                                                 <i class="fa-solid fa-circle-info"></i> \
+                                                            </li> \
+                                                            <li class="list-action-icon-item attach-item" value="'+generatedID+'"> \
+                                                                 <i class="fa-solid fa-paperclip"></i> \
+                                                            </li> \
+                                                            <li class="list-action-icon-item remove-item" value="'+generatedID+'"> \
+                                                                 <i class="fa-solid fa-circle-minus"></i> \
+                                                            </li> \
+                                                       </ul> \
+                                                  </div> \
+                                             </a>';
+                         $(".list-group").last().prepend(stringElement);
+                         
+                         if (input.files && input.files[0]) {
+                              var reader = new FileReader();
+                              
+                              reader.onload = function (e) {
+                                   $('#previewImage_'+generatedID).attr('src', e.target.result);
+                                   $(".cropperBaseImage").attr('src', e.target.result);
+                                   $("#confirmCrpper").attr('value', generatedID);
+                                   loadCropper(generatedID);
+                              }
+                              
+                              reader.readAsDataURL(input.files[0]);
+                         }
+                    }
+                    function loadCropper(generatedcroppedID){
+                         var $cropperModal = $("#cropperModal");
+                         var $cropBtn = document.getElementById('confirmCrpper');
+                         var image = document.getElementById('cropperBaseImage');
+                         var cropperImage = document.getElementById('#previewImage_'+generatedcroppedID);
+                         var cropper;
+                         console.log('previewImage_'+generatedcroppedID);
+                         $cropperModal.modal('show');
+                         $cropperModal.on('shown.bs.modal', function () {
+                              
+                              cropper = new Cropper(image, {
+                                   // aspectRatio: image.naturalWidth / image.naturalHeight,
+                                   checkOrientation: false,
+                                   viewMode: 1,
+                              });
+                              
+                         }).on('hidden.bs.modal', function () {
+                              cropper.destroy();
+                              cropper = null;
+                              $("#previewImage_"+generatedcroppedID).click();
+                         });
+
+                         $cropBtn.addEventListener('click', function (e) {
+                              // var initialAvatarURL;
+                              e.stopImmediatePropagation();
+                              e.preventDefault();
+                              var canvas;
+                              if (cropper) {
+                                   canvas = cropper.getCroppedCanvas({
+                                        width: 180
+                                   });
+                                   // initialAvatarURL = avatar.src;
+                                   console.log('Cropper ID =>'+$(this).attr('value')+'=====');
+                                   $('#previewImage_'+$(this).attr('value')).attr('src', canvas.toDataURL());
+                                   $cropperModal.modal('hide');
+
+                              }
+                         });
+                    }
+
+                    //On file upload/change do action
+                    $("#file-upload").change(function(){
+                         if ($("#file-upload").val() != '') {
+                              appendElement(this);
+                              $("#file-upload").val('');
+                              
+                         }
+                    });
+               });
+          </script>
+     </body>
+</html>
